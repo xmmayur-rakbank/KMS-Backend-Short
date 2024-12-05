@@ -5,7 +5,8 @@ from typing import Annotated, List
 from pydantic import BaseModel
 from training import training
 from chat import chatting
-
+from delete import deleting, deleteAll
+from feedback import feedbackSave
 
 app = FastAPI()
 
@@ -57,7 +58,42 @@ async def chat(username:str, departmant: list[str] , chatRequest: ChatRequest, i
         print(f"Exception in chat() : {e}")
         raise HTTPException(status_code=500, detail=f"Something Went Wrong! Please try again!! {str(e)}")
 
+class FeedbackRequest(BaseModel):
+    SessionId: str
+    MessageId: str
+    Question: str
+    Answer: str
+    Textual_Feedback : str
+    Numerical_Feedback : int
+    reason: str
 
+@app.post("/feedback/")
+async def feedback(feedbackRequest: FeedbackRequest):
+    try:
+        print(feedbackRequest)
+        answer = await feedbackSave(feedbackRequest.SessionId, feedbackRequest.MessageId, feedbackRequest.Answer, feedbackRequest.Question, feedbackRequest.Textual_Feedback, feedbackRequest.Numerical_Feedback,feedbackRequest.reason)
+        return answer
+    except Exception as e:
+        print(f"Exception in chat() : {e}")
+        raise HTTPException(status_code=500, detail=f"Something Went Wrong! Please try again!! {str(e)}")
+
+@app.post("/deleteFile/")
+async def delete(filename: Annotated[str, Form()], username: Annotated[str, Form()]):
+    try:
+        await deleting(filename, username)
+        return "deleted successfully"
+    except Exception as e:
+        print(f"Exception in training() : {e}")
+        raise HTTPException(status_code=500, detail=f"Something Went Wrong! Please try again!! {str(e)}")
+ 
+@app.post("/deleteAll/")
+async def delete(username: Annotated[str, Form()]):
+    try:
+        await deleteAll(username)
+        return "deleted successfully"
+    except Exception as e:
+        print(f"Exception in training() : {e}")
+        raise HTTPException(status_code=500, detail=f"Something Went Wrong! Please try again!! {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run(app)

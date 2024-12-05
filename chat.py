@@ -36,6 +36,7 @@ async def chatting(query,department , chatrequest, is_followup, username):
         persist_directory=persist_directory,  
         )
     list =[]
+    conversationId=chatrequest.ChatHistory[0].conversationId
     for dept in department:
         list.append({'department':dept})
 
@@ -51,7 +52,7 @@ async def chatting(query,department , chatrequest, is_followup, username):
     engg_prompt=engg_prompt_standalone
     
     def get_session_history(session_id: str) -> BaseChatMessageHistory:
-        if session_id == persist_directory + username:
+        if session_id == persist_directory + conversationId:
             if session_id not in store:
                 store[session_id]=ChatMessageHistory()
                 print(f"stored chat message history {ChatMessageHistory()}")
@@ -74,7 +75,7 @@ async def chatting(query,department , chatrequest, is_followup, username):
         doc_strings=[format_document(doc,document_prompt) for doc in documents]
         return document_separator.join(doc_strings)
 
-    session_history = get_session_history_chat(chatrequest.ChatHistory[0].conversationId)
+    session_history = get_session_history_chat(conversationId)
     conversations=[]
     conversation_text=''
     conversations = session_history[-2:]
@@ -155,15 +156,15 @@ async def chatting(query,department , chatrequest, is_followup, username):
                     "context": context,
                     "input": query
                 },
-                config={"configurable":{"session_id":persist_directory + username, "verbose": True}}
+                config={"configurable":{"session_id":persist_directory + conversationId, "verbose": True}}
             )
 
         if(not response.answered):
             engg_prompt=engg_prompt_standalone
             
-            get_session_history(persist_directory + username)
+            get_session_history(persist_directory + conversationId)
     
-            session_history = get_session_history_chat(chatrequest.ChatHistory[0].conversationId)
+            session_history = get_session_history_chat(conversationId)
             print(session_history)
             history = ""
             for msg in session_history:
@@ -231,7 +232,7 @@ async def chatting(query,department , chatrequest, is_followup, username):
             with get_openai_callback() as cb:
                 response = llm(message)
     else:
-        get_session_history(persist_directory + username)
+        get_session_history(persist_directory + conversationId)
 
         documents = await vector_store.asimilarity_search_with_relevance_scores(
             query, k=7, filter=filter
@@ -289,7 +290,7 @@ async def chatting(query,department , chatrequest, is_followup, username):
         with get_openai_callback() as cb:
             response = llm(message)
     answer= response
-    store_conversation(chatrequest.ChatHistory[0].conversationId, query, answer)
+    store_conversation(conversationId, query, answer)
     total_tokens=cb.total_tokens
     completion_tokens=cb.completion_tokens
     prompt_tokens=cb.prompt_tokens
