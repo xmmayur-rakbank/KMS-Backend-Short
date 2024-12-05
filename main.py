@@ -7,6 +7,7 @@ from training import training
 from chat import chatting
 from delete import deleting, deleteAll
 from feedback import feedbackSave
+from list import listing, listChunks
 
 app = FastAPI()
 
@@ -94,6 +95,25 @@ async def delete(username: Annotated[str, Form()]):
     except Exception as e:
         print(f"Exception in training() : {e}")
         raise HTTPException(status_code=500, detail=f"Something Went Wrong! Please try again!! {str(e)}")
+
+@app.get("/list/")
+async def list():
+    try:
+        results = await listing()
+        return results
+    except Exception as e:
+        print(f"Exception in training() : {e}")
+        raise HTTPException(status_code=500, detail=f"Something Went Wrong! Please try again!! {str(e)}")
+ 
+@app.post("/listChunks/")
+async def listchunks(file : Annotated[str, Form()]):
+    try:
+        results = await listChunks(file)
+        return results
+    except Exception as e:
+        print(f"Exception in training() : {e}")
+        raise HTTPException(status_code=500, detail=f"Something Went Wrong! Please try again!! {str(e)}")
+
 
 if __name__ == "__main__":
     uvicorn.run(app)
